@@ -10,7 +10,7 @@ import CommonRouter from "./lib/common.router.js";
 
 const initRoutes = (app) => {
     app.use("/auth", AuthRouter);
-    app.use("/user", UserRouter);
+    app.use("/user", JWTMiddleware, UserRouter);
     app.use("/arrays", JWTMiddleware, ArrayRouter);
     app.use("/api", JWTMiddleware, CommonRouter);
     app.get("/", async (req, res) => {

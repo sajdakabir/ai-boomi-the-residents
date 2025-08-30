@@ -59,7 +59,7 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* <SidebarMenuItem>
+          <SidebarMenuItem>
             <SidebarMenuButton 
               asChild 
               className="hover:bg-transparent active:bg-transparent data-[active=true]:bg-transparent p-0 h-auto"
@@ -144,7 +144,7 @@ export function AppSidebar() {
                 {!isCollapsed && <span className="font-medium">AI Chat</span>}
               </Link>
             </SidebarMenuButton>
-          </SidebarMenuItem> */}
+          </SidebarMenuItem>
           
           {/* <div className="px-3 py-1">
             <button className={cn(

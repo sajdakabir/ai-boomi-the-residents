@@ -20,22 +20,8 @@ const useGoogleCalendar = (
   const [error, setError] = useState<string | null>(null)
   const [isProviderAvailable, setIsProviderAvailable] = useState(false)
   
-  // Check if we're in a browser environment and if the Google OAuth provider is available
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        // This will throw an error if GoogleOAuthProvider is not available
-        setIsProviderAvailable(true)
-      } catch (err) {
-        console.error("Google OAuth provider not available:", err)
-        setError("Google Calendar authentication is not available at the moment")
-        setIsProviderAvailable(false)
-      }
-    }
-  }, [])
-  
-  // Only initialize the login hook if the provider is available
-  const googleCalendarLogin = isProviderAvailable ? useGoogleLogin({
+  // Always call the hook - React hooks must be called unconditionally
+  const googleCalendarLogin = useGoogleLogin({
     onError: (error) => {
       console.error("Google Calendar login failed:", error)
       setError("Failed to authenticate with Google Calendar")
@@ -46,7 +32,14 @@ const useGoogleCalendar = (
     redirect_uri: `${FRONTEND_URL}/api/auth/google-calendar`,
     scope: "https://www.googleapis.com/auth/calendar",
     state: JSON.stringify({ redirect: redirectAfterAuth }),
-  }) : undefined
+  })
+
+  // Check if we're in a browser environment
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsProviderAvailable(true)
+    }
+  }, [])
   
   const handleCalendarLogin = useCallback(async () => {
     try {

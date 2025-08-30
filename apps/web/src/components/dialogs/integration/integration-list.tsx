@@ -14,8 +14,8 @@ import { useXLogin } from "@/hooks/use-x-login";
 const IntegrationsList = () => {
   const [isDisconnecting, setIsDisconnecting] = useState<number | null>(null);
   const { data: user, refreshUser } = useUser();
-  // const { handleCalendarLogin, handleRevokeAccess } =
-  //   useGoogleCalendarLogin("/agenda");
+  const { handleCalendarLogin, handleRevokeAccess } =
+    useGoogleCalendarLogin("/agenda");
   const { handleGmailLogin, handleGmailRevoke } = useGmail("/agenda");
   const { handleLinearLogin, handleLinearRevoke } = useLinearLogin("/agenda");
   const { handleGithubInstall } = useGithubInstall();
@@ -27,10 +27,10 @@ const IntegrationsList = () => {
 
   const integrations = getIntegrations(
     {
-      // calendarConnectHandler: handleCalendarLogin,
-      // calendarDisconnectHandler: handleRevokeAccess,
-        // gmailConnectHandler: handleGmailLogin,
-        // gmailDisconnectHandler: handleGmailRevoke,
+      calendarConnectHandler: handleCalendarLogin,
+      calendarDisconnectHandler: handleRevokeAccess,
+      gmailConnectHandler: handleGmailLogin,
+      gmailDisconnectHandler: handleGmailRevoke,
       linearConnectHandler: handleLinearLogin,
       linearDisconnectHandler: handleLinearRevoke,
       githubConnectHandler: handleGithubInstall,

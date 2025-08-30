@@ -1,13 +1,12 @@
 import { MyRuntimeProvider } from "@/components/provider/my-runtime-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import QueryProvider from "@/components/provider/query-client-provider";
-// import { GoogleOAuthProvider } from "@react-oauth/google";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ErrorBoundary } from "@/components/error/error-boundary";
 import React from "react";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  // Google OAuth provider temporarily disabled
-  // const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   
   // Simple error fallback without event handlers for SSR compatibility
   const errorFallback = (
@@ -26,8 +25,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     </div>
   );
   
-  // Google OAuth provider temporarily disabled
-  /*
   // Always render with GoogleOAuthProvider, even if clientId is empty string
   // This ensures components that use Google OAuth hooks won't break
   const clientId = googleClientId || "";
@@ -36,18 +33,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   if (!googleClientId && process.env.NODE_ENV === "development") {
     console.warn("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set. Google OAuth functionality will not work properly.");
   }
-  */
 
   return (
     <ErrorBoundary fallback={errorFallback}>
-      {/* GoogleOAuthProvider temporarily disabled */}
-      {/* <GoogleOAuthProvider clientId={clientId}> */}
+      <GoogleOAuthProvider clientId={clientId}>
         <AuthProvider>
           <MyRuntimeProvider>
             <QueryProvider>{children}</QueryProvider>
           </MyRuntimeProvider>
         </AuthProvider>
-      {/* </GoogleOAuthProvider> */}
+      </GoogleOAuthProvider>
     </ErrorBoundary>
   );
 }

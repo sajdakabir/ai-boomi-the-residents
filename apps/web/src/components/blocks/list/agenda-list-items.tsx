@@ -154,7 +154,7 @@ export function AgendaListItems({ onDragStateChange }: AgendaListItemsProps) {
           <span onClick={(e) => e.stopPropagation()}>
             {item.source ? (
               <a href={item.metadata?.url} target="_blank">
-                {item.source !== "march" && renderIcon(item.source)}
+                {item.source !== "momo" && renderIcon(item.source)}
               </a>
             ) : (
               <div></div>

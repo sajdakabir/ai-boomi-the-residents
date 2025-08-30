@@ -15,8 +15,8 @@ export class ContextManager {
         
         // Source types supported by the system
         this.supportedSources = [
-            'march',      // User-created in March app
-            'march-ai',   // AI-generated objects
+            'momo',      // User-created in momo app
+            'momo-ai',   // AI-generated objects
             'linear',     // Linear integration
             'twitter',    // Twitter/X integration
             'gmail',      // Gmail integration
@@ -249,13 +249,13 @@ export class ContextManager {
                 workingObjects: [],
                 recentQueries: [],
                 contextReferences: new Map(),
-                activeSource: 'march',
-                sourcesUsed: new Set(['march'])
+                activeSource: 'momo',
+                sourcesUsed: new Set(['momo'])
             },
             sourceActivity: {},
             preferences: {
-                defaultSource: 'march',
-                preferredSources: ['march'],
+                defaultSource: 'momo',
+                preferredSources: ['momo'],
                 sourceNotifications: true
             },
             crossPlatformLinks: new Map()
@@ -266,7 +266,7 @@ export class ContextManager {
      */
     extractSourceInfo(interaction) {
         const sourceInfo = {
-            source: 'march', // default
+            source: 'momo', // default
             context: {},
             crossPlatformRefs: []
         };
@@ -318,8 +318,8 @@ export class ContextManager {
             github: ['github', 'git', 'repository', 'repo', 'issue', 'pr', 'pull request'],
             twitter: ['twitter', 'x', 'tweet'],
             cal: ['calendar', 'meeting', 'appointment', 'event'],
-            'march-ai': ['ai created', 'ai generated', 'ai task'],
-            march: ['march', 'my task', 'my item']
+            'momo-ai': ['ai created', 'ai generated', 'ai task'],
+            momo: ['momo', 'my task', 'my item']
         };
 
         for (const [source, patterns] of Object.entries(platformPatterns)) {
@@ -492,8 +492,8 @@ export class ContextManager {
                 lastError: null
             };
 
-            // For march and march-ai, always connected
-            if (source === 'march' || source === 'march-ai') {
+            // For momo and momo-ai, always connected
+            if (source === 'momo' || source === 'momo-ai') {
                 health = {
                     isConnected: true,
                     status: 'healthy',
@@ -823,7 +823,7 @@ export class ContextManager {
 
         // Check for integration health issues
         for (const [source, health] of Object.entries(activitySummary.integrationHealth)) {
-            if (!health.isConnected && source !== 'march' && source !== 'march-ai') {
+            if (!health.isConnected && source !== 'momo' && source !== 'momo-ai') {
                 recommendations.push({
                     type: 'integration_health',
                     source,
@@ -885,8 +885,8 @@ export class ContextManager {
                 case 'cal':
                     flow.steps = this.getCalendarFlow(intent, integrationHealth, sourceActivity);
                     break;
-                case 'march-ai':
-                    flow.steps = this.getMarchAIFlow(intent, sourceActivity);
+                case 'momo-ai':
+                    flow.steps = this.getmomoAIFlow(intent, sourceActivity);
                     break;
                 default:
                     flow.steps = this.getDefaultFlow(intent, sourceActivity);
@@ -1059,7 +1059,7 @@ export class ContextManager {
         
         if (!health.isConnected) {
             steps.push('Connect to Linear first');
-            steps.push('Authorize March to access your Linear workspace');
+            steps.push('Authorize momo to access your Linear workspace');
         }
         
         switch (intent) {
@@ -1109,7 +1109,7 @@ export class ContextManager {
         
         if (!health.isConnected) {
             steps.push('Connect to GitHub first');
-            steps.push('Install March GitHub app');
+            steps.push('Install momo GitHub app');
         }
         
         switch (intent) {
@@ -1174,7 +1174,7 @@ export class ContextManager {
         return steps;
     }
 
-    getMarchAIFlow(intent, activity) {
+    getmomoAIFlow(intent, activity) {
         const steps = [];
         
         switch (intent) {
@@ -1196,7 +1196,7 @@ export class ContextManager {
         
         switch (intent) {
             case 'search':
-                steps.push('Search your March items');
+                steps.push('Search your momo items');
                 steps.push('Filter by type, status, or date');
                 break;
             case 'create':
@@ -1216,7 +1216,7 @@ export class ContextManager {
         const help = [];
         
         // Integration-specific help
-        if (!health.isConnected && source !== 'march' && source !== 'march-ai') {
+        if (!health.isConnected && source !== 'momo' && source !== 'momo-ai') {
             help.push(`Connect your ${source} account to sync data automatically`);
         }
         

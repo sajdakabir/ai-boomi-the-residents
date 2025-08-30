@@ -513,7 +513,7 @@ export class SmartUpdateService {
         if (sources.length > 1) {
             const sourceDetails = sources.map(source => `${sourceBreakdown[source].count} from ${source}`).join(', ');
             message += ` (${sourceDetails})`;
-        } else if (sources.length === 1 && sources[0] !== 'march') {
+        } else if (sources.length === 1 && sources[0] !== 'momo') {
             message += ` from ${sources[0]}`;
         }
         

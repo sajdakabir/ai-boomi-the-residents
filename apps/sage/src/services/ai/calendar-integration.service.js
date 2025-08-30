@@ -92,7 +92,7 @@ export class CalendarIntegrationService {
                     priority: processedData.priority || "medium",
                     recurring: processedData.recurring || { isRecurring: false }
                 },
-                source: "march"
+                source: "momo"
             });
 
             // Save to search index
@@ -444,7 +444,7 @@ ${meetingObject.description ? `Description:\n${meetingObject.description}\n` : '
 Please confirm your attendance.
 
 Best regards,
-March Assistant
+momo Assistant
         `.trim();
     }
 }

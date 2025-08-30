@@ -58,7 +58,7 @@ Analyze this voice command and respond with a JSON object containing:
         "cross_platform": "true if query involves multiple sources"
     },
     "source_context": {
-        "mentioned_platforms": ["list of platforms mentioned: linear, gmail, github, twitter, calendar, march"],
+        "mentioned_platforms": ["list of platforms mentioned: linear, gmail, github, twitter, calendar, momo"],
         "platform_specific": "true if query is specific to one platform",
         "integration_query": "true if asking about integration status or health",
         "bulk_operation": "true if operation affects multiple sources"
@@ -77,7 +77,7 @@ Platform Recognition Patterns:
 - "GitHub" or "Git" or "repositories" or "repos" → source: github
 - "Twitter" or "X" or "tweets" → source: twitter
 - "Calendar" or "meetings" or "events" → source: cal
-- "March" or "my tasks" (without platform) → source: march
+- "momo" or "my tasks" (without platform) → source: momo
 
 Source-Specific Query Examples:
 - "Do I have any Linear tasks?" → intent: find_objects, source_filter: linear
@@ -93,7 +93,7 @@ Consider:
 - Extract the core intent even from imperfect speech
 - Handle common voice command patterns like "Hey, can you...", "I need to...", "Find me..."
 - Identify urgency from tone indicators like "urgent", "ASAP", "when you get a chance"
-- Greetings like "hey March", "hello", "hi" should be classified as "greeting" intent
+- Greetings like "hey momo", "hello", "hi" should be classified as "greeting" intent
 - Platform names might be mispronounced or abbreviated (e.g., "Git" for "GitHub")
 - Responses should be warm, natural, and human-like - avoid robotic language
 - Use contractions and casual language when appropriate
@@ -356,7 +356,7 @@ Respond only with valid JSON.
             
             if (sources.length > 1) {
                 response += ` from ${sources.join(", ")}`;
-            } else if (sources.length === 1 && sources[0] !== 'march') {
+            } else if (sources.length === 1 && sources[0] !== 'momo') {
                 response += ` from ${this.formatSourceName(sources[0])}`;
             }
             
@@ -375,11 +375,11 @@ Respond only with valid JSON.
 
             // Handle greetings specifically
             if (
-                text.includes("hey march") ||
-                text.includes("hi march") ||
-                text.includes("hello march")
+                text.includes("hey momo") ||
+                text.includes("hi momo") ||
+                text.includes("hello momo")
             ) {
-                return "Hey there! I'm March, your AI assistant. What can I help you with today?";
+                return "Hey there! I'm momo, your AI assistant. What can I help you with today?";
             }
             if (
                 text.includes("hello") ||
@@ -394,8 +394,8 @@ Respond only with valid JSON.
             if (text.includes("how are you")) {
                 return "I'm doing great, thanks for asking! Ready to help you be more productive. What's on your mind?";
             }
-            if (text.includes("what is march") || text.includes("who are you")) {
-                return "I'm March, your AI-powered productivity assistant! I can help you create tasks, find information, schedule meetings, and much more. Just tell me what you need!";
+            if (text.includes("what is momo") || text.includes("who are you")) {
+                return "I'm momo, your AI-powered productivity assistant! I can help you create tasks, find information, schedule meetings, and much more. Just tell me what you need!";
             }
         }
 
@@ -422,8 +422,8 @@ Respond only with valid JSON.
             'github': 'GitHub', 
             'twitter': 'Twitter',
             'cal': 'Calendar',
-            'march': 'March',
-            'march-ai': 'March AI'
+            'momo': 'momo',
+            'momo-ai': 'momo AI'
         };
         return sourceNames[source] || source;
     }
@@ -482,12 +482,12 @@ Respond only with valid JSON.
 
         // Personalized greeting responses
         if (
-            text.includes("hey march") ||
-            text.includes("hi march") ||
-            text.includes("hello march")
+            text.includes("hey momo") ||
+            text.includes("hi momo") ||
+            text.includes("hello momo")
         ) {
             const responses = [
-                "Hey there! I'm March, your AI assistant. What can I help you with today?",
+                "Hey there! I'm momo, your AI assistant. What can I help you with today?",
                 "Hi! I'm here and ready to help. What's on your mind?",
                 "Hello! Great to hear from you. How can I make your day more productive?"
             ];
@@ -495,11 +495,11 @@ Respond only with valid JSON.
         }
 
         if (
-            text.includes("what is march") ||
+            text.includes("what is momo") ||
             text.includes("who are you") ||
             text.includes("what are you")
         ) {
-            return "I'm March, your AI-powered productivity assistant! I can help you create tasks, find information, schedule meetings, and much more. Just tell me what you need!";
+            return "I'm momo, your AI-powered productivity assistant! I can help you create tasks, find information, schedule meetings, and much more. Just tell me what you need!";
         }
 
         if (text.includes("how are you")) {
@@ -535,7 +535,7 @@ Respond only with valid JSON.
 
             // Only respond with greeting if it's JUST a greeting, not a request
             const isPureGreeting = (
-                (text === 'hey march' || text === 'hi march' || text === 'hello march') ||
+                (text === 'hey momo' || text === 'hi momo' || text === 'hello momo') ||
                 (text === 'hello' || text === 'hi' || text === 'hey') ||
                 (text === 'hey there' || text === 'hello there') ||
                 (text === 'good morning' || text === 'good afternoon' || text === 'good evening')
@@ -689,7 +689,7 @@ Respond only with valid JSON.
                 .join(", ");
             
             summary += ` across multiple platforms: ${sourceDetails}`;
-        } else if (sources.length === 1 && sources[0] !== 'march') {
+        } else if (sources.length === 1 && sources[0] !== 'momo') {
             summary += ` from ${this.formatSourceName(sources[0])}`;
         }
 

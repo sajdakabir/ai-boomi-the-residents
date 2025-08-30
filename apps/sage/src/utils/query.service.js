@@ -52,7 +52,7 @@ const SEARCH_PARAMS = {
         OVERDUE: 'overdue'
     },
     PRIORITY_LEVELS: ['urgent', 'high', 'medium', 'low'],
-    SOURCES: ['github', 'linear', 'gmail', 'twitter', 'march']
+    SOURCES: ['github', 'linear', 'gmail', 'twitter', 'momo']
 };
 
 export class QueryUnderstanding {
@@ -111,7 +111,7 @@ export class QueryUnderstanding {
                 "action": "Specific action being requested"
               },
               "entities": {
-                "source": ["detected sources like github, linear, gmail, twitter, march"],
+                "source": ["detected sources like github, linear, gmail, twitter, momo"],
                 "type": ["detected types like todo, note, meeting, bookmark"],
                 "status": ["detected status like todo, in progress, done, archive"],
                 "timeRange": ["detected time references like today, this_week, next_week, overdue"],
@@ -560,7 +560,7 @@ export class QueryUnderstanding {
         const baseObject = {
             title,
             type: analysis.entities.type[0]?.toLowerCase() || 'todo',
-            source: analysis.entities.source[0] || 'march',
+            source: analysis.entities.source[0] || 'momo',
             status: 'todo',
             isCompleted: false,
             isArchived: false,
@@ -593,7 +593,7 @@ export class QueryUnderstanding {
         return {
             type: 'creation',
             data: baseObject,
-            source: analysis.entities.source[0] || 'march',
+            source: analysis.entities.source[0] || 'momo',
             metadata: {
                 confidence: analysis.intent.confidence,
                 needsConfirmation: false
@@ -750,7 +750,7 @@ export class QueryUnderstanding {
 //         OVERDUE: 'overdue'
 //     },
 //     PRIORITY_LEVELS: ['urgent', 'high', 'medium', 'low'],
-//     SOURCES: ['github', 'linear', 'gmail', 'twitter', 'march']
+//     SOURCES: ['github', 'linear', 'gmail', 'twitter', 'momo']
 // };
 
 // // Define explicitly unsupported functionalities
@@ -856,7 +856,7 @@ export class QueryUnderstanding {
 //                 "action": "Specific action being requested"
 //               },
 //               "entities": {
-//                 "source": ["detected sources like github, linear, gmail, twitter, march"],
+//                 "source": ["detected sources like github, linear, gmail, twitter, momo"],
 //                 "type": ["detected types like todo, note, meeting, bookmark"],
 //                 "status": ["detected status like todo, in progress, done, archive"],
 //                 "timeRange": ["detected time references like today, this_week, next_week, overdue"],
@@ -1378,7 +1378,7 @@ export class QueryUnderstanding {
 //         const baseObject = {
 //             title,
 //             type: analysis.entities.type[0]?.toLowerCase() || 'todo',
-//             source: analysis.entities.source[0] || 'march',
+//             source: analysis.entities.source[0] || 'momo',
 //             status: 'todo',
 //             isCompleted: false,
 //             isArchived: false,
@@ -1411,7 +1411,7 @@ export class QueryUnderstanding {
 //         return {
 //             type: 'creation',
 //             data: baseObject,
-//             source: analysis.entities.source[0] || 'march',
+//             source: analysis.entities.source[0] || 'momo',
 //             metadata: {
 //                 confidence: analysis.intent.confidence,
 //                 needsConfirmation: false

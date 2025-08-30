@@ -67,7 +67,7 @@ Examples:
     async handleConversationalQuery (userPrompt, userId) {
         try {
             const conversationalPrompt = `
-You are March AI, a helpful productivity assistant. The user sent you a conversational message. Respond naturally and helpfully.
+You are momo AI, a helpful productivity assistant. The user sent you a conversational message. Respond naturally and helpfully.
 
 User message: "${userPrompt}"
 
@@ -106,7 +106,7 @@ Examples:
             console.error('Error handling conversational query:', error);
             return {
                 isConversational: true,
-                response: "Hello! I'm March AI, your productivity assistant. I can help you with tasks, scheduling, and much more. What would you like me to help you with?",
+                response: "Hello! I'm momo AI, your productivity assistant. I can help you with tasks, scheduling, and much more. What would you like me to help you with?",
                 success: true
             };
         }
@@ -1059,7 +1059,7 @@ Examples:
         - "I found 3 tasks related to your search. Would you like me to show you the details?"
         - "I've created your meeting for tomorrow. Should I send calendar invites to the participants?"
         
-        Respond naturally as March AI assistant.
+        Respond naturally as momo AI assistant.
         `;
 
         try {

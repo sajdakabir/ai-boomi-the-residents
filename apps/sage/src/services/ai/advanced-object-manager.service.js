@@ -66,7 +66,7 @@ export class AdvancedObjectManagerService {
      */
     async findNewItemsBySource(sources, userId, timeframe = '24h') {
         try {
-            const validSources = ['march', 'march-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
+            const validSources = ['momo', 'momo-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
             const sourcesToSearch = Array.isArray(sources) ? sources : [sources];
             const filteredSources = sourcesToSearch.filter(source => validSources.includes(source));
             
@@ -391,8 +391,8 @@ export class AdvancedObjectManagerService {
      */
     getSourcePriority(source) {
         const priorities = {
-            'march': 10,      // User-created items get highest priority
-            'march-ai': 8,    // AI-created items
+            'momo': 10,      // User-created items get highest priority
+            'momo-ai': 8,    // AI-created items
             'linear': 7,      // Work tasks
             'github': 6,      // Code-related
             'gmail': 5,       // Email items
@@ -461,7 +461,7 @@ export class AdvancedObjectManagerService {
                 "status": "null|todo|in progress|done|archive",
                 "timeFrame": "today|this_week|last_week|overdue|specific_date|recent|new",
                 "priority": "urgent|high|medium|low",
-                "source": "github|linear|gmail|twitter|march|march-ai|cal",
+                "source": "github|linear|gmail|twitter|momo|momo-ai|cal",
                 "sources": ["multiple", "sources", "if", "applicable"],
                 "labels": ["tag1", "tag2"],
                 "specificDate": "ISO date if mentioned",
@@ -485,7 +485,7 @@ export class AdvancedObjectManagerService {
         "show me Twitter posts" -> intent: "find_by_source", entities: {source: "twitter", sourceSpecific: true}
         "any Calendar events today?" -> intent: "find_by_source", entities: {source: "cal", timeFrame: "today", sourceSpecific: true}
         "what's new from all integrations?" -> intent: "find_new_items", entities: {sources: ["linear", "twitter", "gmail", "github", "cal"], isCrossPlatformQuery: true, timeFrame: "new"}
-        "show me AI-created tasks" -> intent: "find_by_source", entities: {source: "march-ai", sourceSpecific: true}
+        "show me AI-created tasks" -> intent: "find_by_source", entities: {source: "momo-ai", sourceSpecific: true}
         "what's overdue?" -> intent: "find_overdue", entities: {timeFrame: "overdue"}
         `;
 
@@ -577,7 +577,7 @@ export class AdvancedObjectManagerService {
      * Build source filter for platform-specific queries
      */
     buildSourceFilter(entities) {
-        const validSources = ['march', 'march-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
+        const validSources = ['momo', 'momo-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
         
         // Single source filter
         if (entities.source && validSources.includes(entities.source)) {
@@ -897,13 +897,13 @@ export class AdvancedObjectManagerService {
         const platformContext = this.detectPlatformContext(context, creationIntent);
 
         // Determine source value
-        let source = "march"; // Default for user-created objects
+        let source = "momo"; // Default for user-created objects
         
         if (isAIGenerated) {
-            source = "march-ai"; // AI-generated objects
+            source = "momo-ai"; // AI-generated objects
         }
 
-        // If there's platform context but object is created in March, keep march/march-ai
+        // If there's platform context but object is created in momo, keep momo/momo-ai
         // Platform-specific sources (linear, twitter, gmail, github, cal) are for imported objects
         
         return {
@@ -1230,7 +1230,7 @@ export class AdvancedObjectManagerService {
         Generate relevant tags for this content:
         Title: "${title}"
         Description: "${description}"
-        Source: "${sourceInfo?.source || 'march'}"
+        Source: "${sourceInfo?.source || 'momo'}"
         Creation Method: "${creationMethod}"
         Platform Context: "${sourceContext}"
         
@@ -1318,8 +1318,8 @@ export class AdvancedObjectManagerService {
             }
         }
 
-        // User-created object enhancements (source: "march")
-        if (sourceInfo?.source === 'march' && !sourceInfo?.isAIGenerated) {
+        // User-created object enhancements (source: "momo")
+        if (sourceInfo?.source === 'momo' && !sourceInfo?.isAIGenerated) {
             objectData.metadata.userCreated = true;
             objectData.metadata.directInput = true;
         }
@@ -1491,15 +1491,15 @@ export class AdvancedObjectManagerService {
         }
         
         // Validate source field
-        const validSources = ['march', 'march-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
+        const validSources = ['momo', 'momo-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
         if (!validSources.includes(validatedData.source)) {
-            console.warn(`Invalid source: ${validatedData.source}, defaulting to 'march'`);
-            validatedData.source = 'march';
+            console.warn(`Invalid source: ${validatedData.source}, defaulting to 'momo'`);
+            validatedData.source = 'momo';
         }
         
         // Source-specific validation
         switch (validatedData.source) {
-            case 'march-ai':
+            case 'momo-ai':
                 // AI-generated objects should have AI metadata
                 if (!validatedData.metadata.aiGenerated) {
                     validatedData.metadata.aiGenerated = true;
@@ -1509,7 +1509,7 @@ export class AdvancedObjectManagerService {
                 }
                 break;
                 
-            case 'march':
+            case 'momo':
                 // User-created objects should not have AI metadata
                 if (validatedData.metadata.aiGenerated === undefined) {
                     validatedData.metadata.aiGenerated = false;
@@ -1711,8 +1711,8 @@ export class AdvancedObjectManagerService {
      */
     getSourceDisplayName(source) {
         const displayNames = {
-            'march': 'March',
-            'march-ai': 'AI Assistant',
+            'momo': 'momo',
+            'momo-ai': 'AI Assistant',
             'linear': 'Linear',
             'twitter': 'Twitter/X',
             'gmail': 'Gmail',
@@ -1775,8 +1775,8 @@ export class AdvancedObjectManagerService {
      */
     getSourceIcon(source) {
         const icons = {
-            'march': '📝',
-            'march-ai': '🤖',
+            'momo': '📝',
+            'momo-ai': '🤖',
             'linear': '📋',
             'twitter': '🐦',
             'gmail': '📧',
@@ -1792,8 +1792,8 @@ export class AdvancedObjectManagerService {
      */
     getSourceColor(source) {
         const colors = {
-            'march': '#3b82f6',      // Blue
-            'march-ai': '#8b5cf6',   // Purple
+            'momo': '#3b82f6',      // Blue
+            'momo-ai': '#8b5cf6',   // Purple
             'linear': '#5e6ad2',     // Linear purple
             'twitter': '#1da1f2',    // Twitter blue
             'gmail': '#ea4335',      // Gmail red

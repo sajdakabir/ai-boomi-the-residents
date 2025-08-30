@@ -10,7 +10,7 @@ import { BACKEND_URL, WEBSOCKET_URL } from '@/lib/constants';
 
 /**
  * Voice-Enabled AI Chat Component
- * Extends the existing AI chat with voice capabilities including "Hey March" wake word
+ * Extends the existing AI chat with voice capabilities including "Hey momo" wake word
  */
 const VoiceEnabledAIChat = () => {
     const [messages, setMessages] = useState([]);
@@ -76,7 +76,7 @@ const VoiceEnabledAIChat = () => {
             const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
             console.log('Wake word detection:', transcript);
 
-            if (transcript.includes('hey march') || transcript.includes('hi march') || transcript.includes('hello march')) {
+            if (transcript.includes('hey momo') || transcript.includes('hi momo') || transcript.includes('hello momo')) {
                 handleWakeWordDetected();
             }
         };
@@ -175,8 +175,8 @@ const VoiceEnabledAIChat = () => {
     };
 
     const handleWakeWordDetected = () => {
-        console.log('Wake word "Hey March" detected!');
-        toast.success('Hey March detected! Listening...', { duration: 2000 });
+        console.log('Wake word "Hey momo" detected!');
+        toast.success('Hey momo detected! Listening...', { duration: 2000 });
 
         // Stop wake word detection temporarily and prevent restart
         setWakeWordRestarting(false);

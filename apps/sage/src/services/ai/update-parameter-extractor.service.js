@@ -49,13 +49,13 @@ export class UpdateParameterExtractorService {
                 requiresConfirmation: true,
                 crossPlatformAllowed: false
             },
-            'march': {
+            'momo': {
                 readOnlyFields: [],
                 allowedUpdates: ['title', 'description', 'type', 'status', 'priority', 'labels', 'metadata', 'due'],
                 requiresConfirmation: false,
                 crossPlatformAllowed: true
             },
-            'march-ai': {
+            'momo-ai': {
                 readOnlyFields: [],
                 allowedUpdates: ['title', 'description', 'type', 'status', 'priority', 'labels', 'metadata', 'due'],
                 requiresConfirmation: false,
@@ -117,7 +117,7 @@ export class UpdateParameterExtractorService {
                 "keywords": ["search", "terms", "from", "query"],
                 "type": "todo|note|meeting|bookmark|null",
                 "status": "null|todo|in progress|done|archive|null",
-                "source": "march|march-ai|linear|twitter|gmail|github|cal|null",
+                "source": "momo|momo-ai|linear|twitter|gmail|github|cal|null",
                 "sources": ["array", "of", "sources", "if", "multiple"],
                 "priority": "urgent|high|medium|low|null",
                 "labels": ["label1", "label2"],
@@ -296,7 +296,7 @@ export class UpdateParameterExtractorService {
                 isValid: true,
                 integrationSources,
                 nativeSources: sourceConstraints.targetSources.filter(source => 
-                    ['march', 'march-ai'].includes(source)
+                    ['momo', 'momo-ai'].includes(source)
                 ),
                 requiresSpecialHandling: integrationSources.length > 0
             };
@@ -328,7 +328,7 @@ export class UpdateParameterExtractorService {
         
         // If no specific sources mentioned, assume all sources could be targeted
         if (sources.length === 0) {
-            return ['march', 'march-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
+            return ['momo', 'momo-ai', 'linear', 'twitter', 'gmail', 'github', 'cal'];
         }
         
         return [...new Set(sources)]; // Remove duplicates

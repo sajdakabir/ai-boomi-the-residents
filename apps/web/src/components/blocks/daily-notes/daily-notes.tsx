@@ -414,7 +414,7 @@ export function DailyNotes({ date: initialDate = new Date() }: DailyNotesProps) 
                         aria-label="Select month"
                       >
                         {[
-                          "January", "February", "March", "April", "May", "June",
+                          "January", "February", "momo", "April", "May", "June",
                           "July", "August", "September", "October", "November", "December"
                         ].map((month, index) => (
                           <option key={month} value={index}>{month}</option>

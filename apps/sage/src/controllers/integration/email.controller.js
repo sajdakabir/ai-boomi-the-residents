@@ -232,7 +232,7 @@ const getGmailAccessTokenController = async (req, res, next) => {
         const profileResponse = await gmail.users.getProfile({ userId: 'me' });
         const email = profileResponse.data.emailAddress;
         console.log("email: ", email);
-        const labelId = await createLabel(OauthEmailClient, 'march_inbox');
+        const labelId = await createLabel(OauthEmailClient, 'momo_inbox');
 
         user.integration.gmail.email = email;
         user.integration.gmail.accessToken = tokenInfo.access_token;

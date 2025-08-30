@@ -60,5 +60,6 @@ export const environment = {
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
     GOOGLE_EMAIL_REDIRECT_URL: process.env.GOOGLE_EMAIL_REDIRECT_URL,
     BACKEND_URL: process.env.BACKEND_URL,
-    WEBSOCKET_URL: process.env.WEBSOCKET_URL
+    WEBSOCKET_URL: process.env.WEBSOCKET_URL,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY
 };

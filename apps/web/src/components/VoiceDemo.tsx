@@ -25,8 +25,8 @@ export const VoiceDemo = () => {
     },
     {
       icon: <MessageSquare className="h-6 w-6 text-green-500" />,
-      title: "Hey March Wake Word",
-      description: "Say 'Hey March' anytime to activate voice mode",
+      title: "Hey momo Wake Word",
+      description: "Say 'Hey momo' anytime to activate voice mode",
       badge: "Always Listening"
     },
     {
@@ -44,11 +44,11 @@ export const VoiceDemo = () => {
   ];
 
   const exampleCommands = [
-    "Hey March, create a task to call the client tomorrow",
-    "Hey March, find my urgent tasks due this week",
-    "Hey March, schedule a team meeting for Friday at 2pm",
-    "Hey March, show me my completed tasks from last month",
-    "Hey March, add a due date to all my unplanned todos"
+    "Hey momo, create a task to call the client tomorrow",
+    "Hey momo, find my urgent tasks due this week",
+    "Hey momo, schedule a team meeting for Friday at 2pm",
+    "Hey momo, show me my completed tasks from last month",
+    "Hey momo, add a due date to all my unplanned todos"
   ];
 
   return (
@@ -131,9 +131,9 @@ export const VoiceDemo = () => {
                 2
               </div>
               <div>
-                <p className="font-medium">Say "Hey March"</p>
+                <p className="font-medium">Say "Hey momo"</p>
                 <p className="text-sm text-muted-foreground">
-                  The system is always listening for "Hey March" to activate voice mode
+                  The system is always listening for "Hey momo" to activate voice mode
                 </p>
               </div>
             </div>
@@ -157,7 +157,7 @@ export const VoiceDemo = () => {
               <div>
                 <p className="font-medium">Listen to Response</p>
                 <p className="text-sm text-muted-foreground">
-                  March will respond with both text and speech for a natural conversation
+                  momo will respond with both text and speech for a natural conversation
                 </p>
               </div>
             </div>
@@ -182,8 +182,8 @@ export const VoiceDemo = () => {
           </div>
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-700">
-              <strong>Tip:</strong> You can also have follow-up conversations! After March responds, 
-              you can continue the conversation naturally without saying "Hey March" again.
+              <strong>Tip:</strong> You can also have follow-up conversations! After momo responds, 
+              you can continue the conversation naturally without saying "Hey momo" again.
             </p>
           </div>
         </CardContent>

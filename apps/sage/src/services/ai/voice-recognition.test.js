@@ -138,7 +138,7 @@ describe('VoiceRecognitionService - Multi-Source Queries', () => {
             expect(voiceService.formatSourceName('github')).toBe('GitHub');
             expect(voiceService.formatSourceName('twitter')).toBe('Twitter');
             expect(voiceService.formatSourceName('cal')).toBe('Calendar');
-            expect(voiceService.formatSourceName('march-ai')).toBe('March AI');
+            expect(voiceService.formatSourceName('momo-ai')).toBe('momo AI');
         });
     });
 
@@ -183,27 +183,27 @@ describe('VoiceRecognitionService - Multi-Source Queries', () => {
             const context = {
                 integration: 'linear',
                 operation: 'search',
-                alternativeSources: ['github', 'march']
+                alternativeSources: ['github', 'momo']
             };
 
             const result = voiceService.generateIntegrationErrorRecovery(new Error('Connection failed'), context);
             
             expect(result.needsRecoveryChoice).toBe(true);
             expect(result.text).toContain('trouble with Linear');
-            expect(result.text).toContain('GitHub or March');
-            expect(result.recoveryOptions.alternativeSources).toEqual(['github', 'march']);
+            expect(result.text).toContain('GitHub or momo');
+            expect(result.recoveryOptions.alternativeSources).toEqual(['github', 'momo']);
         });
 
         test('should process recovery choice for alternatives', () => {
             const recoveryOptions = {
                 integration: 'linear',
-                alternativeSources: ['github', 'march']
+                alternativeSources: ['github', 'momo']
             };
 
             const result = voiceService.processRecoveryChoice('yes, use alternatives', recoveryOptions);
             
             expect(result.choice).toBe('use_alternatives');
-            expect(result.alternatives).toEqual(['github', 'march']);
+            expect(result.alternatives).toEqual(['github', 'momo']);
             expect(result.shouldSpeak).toBe(true);
         });
 

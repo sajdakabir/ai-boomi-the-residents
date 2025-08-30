@@ -44,7 +44,7 @@ async function testSmartUpdateService() {
         }
         
         // Test source constraint validation
-        const testSources = ['linear', 'march', 'github'];
+        const testSources = ['linear', 'momo', 'github'];
         const testUpdateData = { status: 'done', title: 'new title' };
         
         const validation = extractor.validateSourceUpdates(testSources, testUpdateData);
@@ -67,7 +67,7 @@ async function testSmartUpdateService() {
             console.log('✓ Source recommendations work for integration sources');
         }
         
-        const nativeRecommendations = extractor.getSourceUpdateRecommendations('march');
+        const nativeRecommendations = extractor.getSourceUpdateRecommendations('momo');
         if (nativeRecommendations && nativeRecommendations.allowedUpdates) {
             console.log('✓ Source recommendations work for native sources');
         }

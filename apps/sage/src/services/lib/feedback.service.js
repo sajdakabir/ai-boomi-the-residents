@@ -33,7 +33,7 @@ const sendFeedbackEmail = async (req, res) => {
             from: `"Feedback Form" <${environment.SMTP_USER}>`,
             to: environment.FEEDBACK_RECEIVER_EMAIL,
             cc: validatedData.email,
-            subject: `Feedback sent to march`,
+            subject: `Feedback sent to momo`,
             text: `Title: ${validatedData.title}\n\nFeedback: ${validatedData.feedback}`,
             attachments: attachments.map((file) => ({
                 filename: file.originalname,

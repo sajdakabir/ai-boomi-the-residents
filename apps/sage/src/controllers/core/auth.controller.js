@@ -1,7 +1,7 @@
-import { validateGoogleUser, getUserByEmail, createGithubUser, validateGithubUser } from "../../services/core/user.service.js";
+import { validateGoogleUser, getUserByEmail, createGoogleUser, createGithubUser, validateGithubUser } from "../../services/core/user.service.js";
 import { generateJWTTokenPair } from "../../utils/jwt.service.js";
 import { BlackList } from "../../models/core/black-list.model.js";
-
+import { logsnag } from "../../loaders/logsnag.loader.js";
 import { initQueue } from "../../loaders/bullmq.loader.js";
 
 const authenticateWithGoogleController = async (req, res, next) => {
@@ -24,9 +24,21 @@ const authenticateWithGoogleController = async (req, res, next) => {
         let isNewUser = false;
         if (!user) {
             isNewUser = true;
-            // user = await createGoogleUser(payload);
+            user = await createGoogleUser(payload);
 
-
+            // Log user event to LogSnag
+            await logsnag.track({
+                channel: "new-users",
+                event: `${user.userName} is Added`,
+                user_id: user._id,
+                icon: "✨",
+                notify: true,
+                tags: {
+                    method: "Google",
+                    email: user.accounts.google.email,
+                    name: user.fullName
+                }
+            });
             await initQueue.add('initQueue', { user: user._id });
         }
 
@@ -61,7 +73,19 @@ const authenticateWithGithubController = async (req, res, next) => {
             isNewUser = true;
             user = await createGithubUser(payload);
 
-
+            // Log user event to LogSnag
+            await logsnag.track({
+                channel: "new-users",
+                event: `${user.userName} is Added`,
+                user_id: user._id,
+                icon: "✨",
+                notify: true,
+                tags: {
+                    method: "Github",
+                    email: user.accounts.github.email,
+                    name: user.fullName
+                }
+            });
 
             // Add job to initQueue
             await initQueue.add('initQueue', { user: user._id });

@@ -1,6 +1,6 @@
 import { User } from "../../models/core/user.model.js";
 import { environment } from "../../loaders/environment.loader.js";
-// import { OauthClient } from "../../loaders/google.loader.js";
+import { OauthClient } from "../../loaders/google.loader.js";
 import axios from 'axios';
 
 const getUserByEmail = async (email) => {
@@ -101,39 +101,39 @@ const validateGithubUser = async (code) => {
     }
 }
 
-// const createGoogleUser = async ({
-//     fullName,
-//     userName,
-//     email,
-//     id,
-//     avatar,
-//     timezone
-// }) => {
-//     let user = await User.findOne({
-//         'accounts.google.email': email
-//     })
+const createGoogleUser = async ({
+    fullName,
+    userName,
+    email,
+    id,
+    avatar,
+    timezone
+}) => {
+    let user = await User.findOne({
+        'accounts.google.email': email
+    })
 
-//     if (user) {
-//         const error = new Error("User already exists")
-//         error.statusCode = 400;
-//         throw error
-//     }
-//     userName = userName || email.split('@')[0];
-//     user = await User.create({
-//         fullName,
-//         userName,
-//         accounts: {
-//             google: {
-//                 email,
-//                 id,
-//                 isVerified: true
-//             }
-//         },
-//         avatar,
-//         userTimezone: timezone
-//     })
-//     return user;
-// }
+    if (user) {
+        const error = new Error("User already exists")
+        error.statusCode = 400;
+        throw error
+    }
+    userName = userName || email.split('@')[0];
+    user = await User.create({
+        fullName,
+        userName,
+        accounts: {
+            google: {
+                email,
+                id,
+                isVerified: true
+            }
+        },
+        avatar,
+        userTimezone: timezone
+    })
+    return user;
+}
 
 const createGithubUser = async (
     {
@@ -191,7 +191,7 @@ export {
     getUserById,
     validateGoogleUser,
     validateGithubUser,
-    // createGoogleUser,
+    createGoogleUser,
     createGithubUser,
     updateUser
 }

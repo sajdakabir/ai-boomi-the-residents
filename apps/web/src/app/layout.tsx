@@ -8,7 +8,7 @@ import "../styles/calendar.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "march",
+  title: "",
   description: "engineered for makers",
 };
 

@@ -1,4 +1,5 @@
 import AuthRouter from "./core/auth.route.js";
+import UserRouter from "./core/user.route.js";
 
 
 /**
@@ -7,7 +8,7 @@ import AuthRouter from "./core/auth.route.js";
 
 const initRoutes = (app) => {
     app.use("/auth", AuthRouter);
-   
+    app.use("/user", UserRouter);
     app.get("/", async (req, res) => {
         res.json({
             "message": "Welcome to  sage "

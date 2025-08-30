@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import Joi from "joi";
 import { environment } from "./loaders/environment.loader.js";
-// import { initRoutes } from "./routers/index.js";
+import { initRoutes } from "./routers/index.js";
 
 import bodyParser from "body-parser";
 
@@ -21,7 +21,7 @@ app.use(
 
 
 
-// initRoutes(app);
+initRoutes(app);
 // Express error handler
 app.use((err, req, res, next) => {
     console.log(err);

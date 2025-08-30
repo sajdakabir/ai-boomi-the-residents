@@ -37,11 +37,9 @@ import {
     getObjectsByRecurrenceController
 } from "../../controllers/lib/object.controller.js";
 // Utility imports
-import { uploadFileController } from "../../controllers/lib/fileAsset.controller.js";
-import { upload } from "../../loaders/s3.loader.js";
-import { feedbackController } from "../../controllers/lib/feedback.controller.js";
+
 import { linkPreviewGeneratorController } from "../../controllers/lib/linkPreview.controller.js";
-import { createTypeController, getAllTypesController, getTypesBySlugController } from "../../controllers/lib/type.controller.js";
+
 
 const router = Router();
 
@@ -90,23 +88,11 @@ router.route("/items/filter/").get(filterObjectsController);
 // router.route("/items/source/").get(getObjectsBySourceController);
 router.route("/items/all/").get(getAllObjectsController);
 
-/* Asset Management Routes
--------------------------------------------------- */
-router.route("/file-assets/upload/")
-    .post(upload.single("file"), uploadFileController);
 
 /* Utility Routes
 -------------------------------------------------- */
-router.route("/feedback/").post(feedbackController);
+
 router.route("/get-link-preview/").post(linkPreviewGeneratorController);
-
-/* Types Routes
--------------------------------------------------- */
-router.route("/types/")
-    .post(createTypeController)
-    .get(getAllTypesController);
-
-router.route("/types/:slug").get(getTypesBySlugController);
 
 /* Dynamic Date Route */
 router.route("/:date/").get(getUserObjectsByDateController);

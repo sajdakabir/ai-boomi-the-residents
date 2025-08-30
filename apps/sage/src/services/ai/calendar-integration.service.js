@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Object } from "../../models/lib/object.model.js";
+import { Object as ObjectModel } from "../../models/lib/object.model.js";
+import { User } from "../../models/core/user.model.js";
 import { saveContent } from "../../utils/helper.service.js";
+import { addGoogleCalendarEvent } from "../integration/calendar.service.js";
 
 /**
  * Calendar Integration Service
@@ -21,42 +23,68 @@ export class CalendarIntegrationService {
     }
 
     /**
-     * Parse natural language for calendar event creation
+     * Parse calendar request from natural language
      */
-    async parseCalendarRequest(userPrompt, userId) {
+    async parseCalendarRequest(userPrompt, userId, context = {}) {
         const parsePrompt = `
-        Parse this calendar/meeting request: "${userPrompt}"
-        
-        Extract the following information and return as JSON:
-        {
-            "title": "meeting title",
-            "description": "meeting description",
-            "date": "ISO date string",
-            "time": "time in HH:MM format",
-            "duration": "duration in minutes",
-            "attendees": ["list of attendee emails or names"],
-            "location": "meeting location or 'online'",
-            "recurring": {
-                "isRecurring": boolean,
-                "frequency": "daily|weekly|monthly",
-                "endDate": "ISO date string if specified"
-            },
-            "priority": "high|medium|low",
-            "type": "meeting|call|appointment|reminder",
-            "timezone": "user timezone if mentioned",
-            "confidence": 0.95
-        }
-        
-        Examples:
-        "Schedule a team meeting tomorrow at 2pm" -> date: tomorrow, time: "14:00", title: "Team meeting"
-        "Book a doctor appointment next Friday at 10am" -> date: next Friday, time: "10:00", title: "Doctor appointment"
-        "Create a recurring standup every Monday at 9am" -> recurring: true, frequency: "weekly"
-        `;
+Analyze this calendar request and extract structured data:
+"${userPrompt}"
+
+Return JSON with this exact structure:
+{
+  "type": "event_creation",
+  "title": "extracted title",
+  "description": "extracted description",
+  "date": "YYYY-MM-DD",
+  "time": "HH:MM",
+  "duration": 60,
+  "timezone": "UTC",
+  "location": "extracted location or empty string",
+  "attendees": ["email1@example.com"],
+  "recurring": {
+    "isRecurring": false,
+    "frequency": "none",
+    "endDate": null
+  },
+  "confidence": 0.8
+}
+
+Current date: ${new Date().toISOString().split('T')[0]}
+Current time: ${new Date().toTimeString().split(' ')[0]}`;
 
         try {
             const result = await this.model.generateContent(parsePrompt);
             const response = result.response.text();
-            return JSON.parse(response.replace(/```json\n?|\n?```/g, ''));
+            
+            // Clean and parse JSON response
+            let cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+            
+            // Extract JSON from markdown if present
+            const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                cleanResponse = jsonMatch[0];
+            }
+            
+            const parsedData = JSON.parse(cleanResponse);
+            
+            // Validate and set defaults
+            return {
+                type: parsedData.type || "event_creation",
+                title: parsedData.title || "Calendar Event",
+                description: parsedData.description || `Event created from: "${userPrompt}"`,
+                date: parsedData.date || new Date().toISOString().split('T')[0],
+                time: parsedData.time || "09:00",
+                duration: parsedData.duration || 60,
+                timezone: parsedData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+                location: parsedData.location || "",
+                attendees: parsedData.attendees || [],
+                recurring: parsedData.recurring || {
+                    isRecurring: false,
+                    frequency: "none",
+                    endDate: null
+                },
+                confidence: parsedData.confidence || 0.7
+            };
         } catch (error) {
             console.error("Error parsing calendar request:", error);
             return this.getDefaultCalendarData(userPrompt);
@@ -64,387 +92,233 @@ export class CalendarIntegrationService {
     }
 
     /**
-     * Create calendar event/meeting object
+     * Create intelligent calendar event with Google Calendar integration
      */
-    async createCalendarEvent(calendarData, userId) {
+    async createIntelligentEvent(userPrompt, userId, context = {}) {
         try {
-            // Validate and process the calendar data
-            const processedData = await this.processCalendarData(calendarData, userId);
+            console.log(`Creating intelligent calendar event for user ${userId}: ${userPrompt}`);
             
-            // Create the meeting object
-            const meetingObject = await Object.create({
-                user: userId,
-                title: processedData.title,
-                description: processedData.description,
-                type: processedData.type || "meeting",
-                status: "null",
-                due: {
-                    date: processedData.dateTime,
-                    string: processedData.dateString,
-                    timezone: processedData.timezone || "UTC"
-                },
+            // Parse the calendar request using AI
+            const calendarData = await this.parseCalendarRequest(userPrompt, userId, context);
+
+        // Default to 30 minutes if no duration is specified
+        if (!calendarData.duration) {
+            this.logger.info('Duration not specified, defaulting to 30 minutes.');
+            calendarData.duration = 30;
+        }
+            console.log('Parsed calendar data:', calendarData);
+            
+            // Create event object in database
+            const eventObject = {
+                type: 'calendar_event',
+                title: calendarData.title,
+                description: calendarData.description,
                 metadata: {
-                    calendar: true,
-                    attendees: processedData.attendees || [],
-                    location: processedData.location || "",
-                    duration: processedData.duration || 60,
-                    meetingType: processedData.meetingType || "in-person",
-                    priority: processedData.priority || "medium",
-                    recurring: processedData.recurring || { isRecurring: false }
+                    date: calendarData.date,
+                    time: calendarData.time,
+                    duration: calendarData.duration,
+                    timezone: calendarData.timezone,
+                    location: calendarData.location,
+                    attendees: calendarData.attendees,
+                    recurring: calendarData.recurring,
+                    confidence: calendarData.confidence,
+                    originalPrompt: userPrompt,
+                    createdAt: new Date().toISOString()
                 },
-                source: "momo"
-            });
-
-            // Save to search index
-            await saveContent(meetingObject);
-
-            // Generate calendar invitation if needed
-            const invitation = await this.generateCalendarInvitation(meetingObject);
-
-            return {
-                meeting: meetingObject,
-                invitation,
-                success: true,
-                message: `Created ${processedData.type}: ${processedData.title}`
+                userId: userId,
+                createdAt: new Date(),
+                updatedAt: new Date()
             };
-
-        } catch (error) {
-            console.error("Error creating calendar event:", error);
-            throw error;
-        }
-    }
-
-    /**
-     * Process and validate calendar data
-     */
-    async processCalendarData(calendarData, userId) {
-        // Process date and time
-        const dateTime = this.processDateTime(calendarData.date, calendarData.time);
-        const dateString = this.generateDateString(dateTime);
-
-        // Process attendees
-        const attendees = this.processAttendees(calendarData.attendees || []);
-
-        // Determine meeting type based on location
-        const meetingType = this.determineMeetingType(calendarData.location);
-
-        return {
-            title: calendarData.title || "New Meeting",
-            description: calendarData.description || "",
-            type: calendarData.type || "meeting",
-            dateTime: dateTime.toISOString(),
-            dateString,
-            timezone: calendarData.timezone || "UTC",
-            attendees,
-            location: calendarData.location || "",
-            duration: calendarData.duration || 60,
-            meetingType,
-            priority: calendarData.priority || "medium",
-            recurring: calendarData.recurring || { isRecurring: false }
-        };
-    }
-
-    /**
-     * Process date and time strings into Date object
-     */
-    processDateTime(dateStr, timeStr) {
-        try {
-            let date;
             
-            // Handle relative dates
-            if (dateStr.includes("today")) {
-                date = new Date();
-            } else if (dateStr.includes("tomorrow")) {
-                date = new Date();
-                date.setDate(date.getDate() + 1);
-            } else if (dateStr.includes("next week")) {
-                date = new Date();
-                date.setDate(date.getDate() + 7);
-            } else {
-                date = new Date(dateStr);
-            }
-
-            // Handle time
-            if (timeStr) {
-                const [hours, minutes] = timeStr.split(':').map(Number);
-                date.setHours(hours, minutes || 0, 0, 0);
-            }
-
-            return date;
-        } catch (error) {
-            console.error("Error processing date/time:", error);
-            // Default to tomorrow at 10 AM
-            const defaultDate = new Date();
-            defaultDate.setDate(defaultDate.getDate() + 1);
-            defaultDate.setHours(10, 0, 0, 0);
-            return defaultDate;
-        }
-    }
-
-    /**
-     * Generate human-readable date string
-     */
-    generateDateString(dateTime) {
-        const options = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
-        return dateTime.toLocaleDateString('en-US', options);
-    }
-
-    /**
-     * Process attendees list
-     */
-    processAttendees(attendees) {
-        return attendees.map(attendee => {
-            if (typeof attendee === 'string') {
-                // Check if it's an email
-                if (attendee.includes('@')) {
-                    return { email: attendee, name: attendee.split('@')[0] };
-                }
-                return { name: attendee, email: null };
-            }
-            return attendee;
-        });
-    }
-
-    /**
-     * Determine meeting type based on location
-     */
-    determineMeetingType(location) {
-        if (!location) return "in-person";
-        
-        const onlineKeywords = ["zoom", "meet", "teams", "online", "virtual", "remote"];
-        const locationLower = location.toLowerCase();
-        
-        return onlineKeywords.some(keyword => locationLower.includes(keyword)) 
-            ? "online" 
-            : "in-person";
-    }
-
-    /**
-     * Generate calendar invitation text
-     */
-    async generateCalendarInvitation(meetingObject) {
-        const invitationPrompt = `
-        Generate a professional calendar invitation for this meeting:
-        
-        Title: ${meetingObject.title}
-        Description: ${meetingObject.description}
-        Date: ${meetingObject.due.string}
-        Location: ${meetingObject.metadata.location}
-        Duration: ${meetingObject.metadata.duration} minutes
-        Attendees: ${meetingObject.metadata.attendees.map(a => a.name || a.email).join(', ')}
-        
-        Create a professional invitation email that includes:
-        - Clear subject line
-        - Meeting details
-        - Agenda (if description provided)
-        - Join instructions (if online)
-        - RSVP request
-        `;
-
-        try {
-            const result = await this.model.generateContent(invitationPrompt);
-            return result.response.text();
-        } catch (error) {
-            console.error("Error generating invitation:", error);
-            return this.getDefaultInvitation(meetingObject);
-        }
-    }
-
-    /**
-     * Find available time slots
-     */
-    async findAvailableSlots(userId, date, duration = 60, preferences = {}) {
-        try {
-            // Get existing meetings for the date
-            const startOfDay = new Date(date);
-            startOfDay.setHours(0, 0, 0, 0);
+            // Save to database
+            const savedEvent = await ObjectModel.create(eventObject);
+            console.log('Saved event to database:', savedEvent._id);
             
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
+            // Try to integrate with Google Calendar
+            let calendarIntegrated = false;
+            let calendarEventId = null;
+            
+            try {
+                const user = await User.findById(userId);
 
-            const existingMeetings = await Object.find({
-                user: userId,
-                type: "meeting",
-                "due.date": {
-                    $gte: startOfDay.toISOString(),
-                    $lte: endOfDay.toISOString()
-                },
-                isDeleted: false
-            }).sort({ "due.date": 1 });
+                if (user && user.integration && user.integration.googleCalendar && user.integration.googleCalendar.accessToken) {
+                    const googleEvent = {
+                        summary: calendarData.title,
+                        description: calendarData.description,
+                        location: calendarData.location,
+                        start: {
+                            dateTime: `${calendarData.date}T${calendarData.time}:00`,
+                            timeZone: 'Asia/Kolkata',
+                        },
+                        end: {
+                            dateTime: this.calculateEndTime(calendarData.date, calendarData.time, calendarData.duration),
+                            timeZone: 'Asia/Kolkata',
+                        },
+                        attendees: calendarData.attendees.map(email => ({ email }))
+                    };
 
-            // Generate available slots
-            const workStart = preferences.workStart || 9; // 9 AM
-            const workEnd = preferences.workEnd || 17; // 5 PM
-            const slotDuration = duration;
-            const availableSlots = [];
+                    console.log('Creating Google Calendar event:', googleEvent);
+                    const googleResult = await addGoogleCalendarEvent(user, googleEvent);
 
-            for (let hour = workStart; hour < workEnd; hour++) {
-                for (let minute = 0; minute < 60; minute += 30) {
-                    const slotStart = new Date(date);
-                    slotStart.setHours(hour, minute, 0, 0);
-                    
-                    const slotEnd = new Date(slotStart);
-                    slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
+                    if (googleResult && googleResult.success) {
+                        calendarIntegrated = true;
+                        calendarEventId = googleResult.eventId;
 
-                    // Check if slot conflicts with existing meetings
-                    const hasConflict = existingMeetings.some(meeting => {
-                        const meetingStart = new Date(meeting.due.date);
-                        const meetingEnd = new Date(meetingStart);
-                        meetingEnd.setMinutes(meetingEnd.getMinutes() + (meeting.metadata.duration || 60));
-
-                        return (slotStart < meetingEnd && slotEnd > meetingStart);
-                    });
-
-                    if (!hasConflict && slotEnd.getHours() <= workEnd) {
-                        availableSlots.push({
-                            start: slotStart.toISOString(),
-                            end: slotEnd.toISOString(),
-                            startTime: slotStart.toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                            }),
-                            endTime: slotEnd.toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                            })
+                        await ObjectModel.findByIdAndUpdate(savedEvent._id, {
+                            'metadata.googleCalendarEventId': calendarEventId,
+                            'metadata.calendarIntegrated': true,
+                            updatedAt: new Date()
                         });
+
+                        console.log('Successfully integrated with Google Calendar:', calendarEventId);
+                    } else {
+                        const detailedError = googleResult && googleResult.error ? googleResult.error : 'Unknown error during calendar integration.';
+                        console.error('Google Calendar integration failed:', detailedError);
                     }
+                } else {
+                    console.log('User or Google Calendar integration not found or not configured.');
                 }
+            } catch (calendarError) {
+                const detailedError = calendarError.response && calendarError.response.data ? JSON.stringify(calendarError.response.data) : calendarError.message;
+                console.error('An exception occurred during Google Calendar integration:', detailedError);
             }
-
-            return availableSlots.slice(0, 10); // Return top 10 slots
+            
+            // Prepare response
+            const response = {
+                success: true,
+                type: 'calendar_event_created',
+                message: calendarIntegrated 
+                    ? `Successfully created calendar event "${calendarData.title}" and added to your Google Calendar.`
+                    : `Created calendar event "${calendarData.title}" in local database. Google Calendar integration unavailable.`,
+                response: {
+                    eventId: savedEvent._id,
+                    googleEventId: calendarEventId,
+                    title: calendarData.title,
+                    date: calendarData.date,
+                    time: calendarData.time,
+                    duration: calendarData.duration,
+                    location: calendarData.location,
+                    confidence: calendarData.confidence
+                },
+                calendarIntegrated,
+                suggestions: [
+                    "You can ask me to modify this event",
+                    "Say 'show my calendar' to see all events",
+                    "Ask me to create recurring events"
+                ]
+            };
+            
+            return response.message;
+            
         } catch (error) {
-            console.error("Error finding available slots:", error);
-            return [];
+            console.error('Error creating intelligent calendar event:', error);
+            return {
+                success: false,
+                type: 'calendar_error',
+                message: 'Sorry, I encountered an error while creating your calendar event. Please try again.',
+                response: {
+                    error: error.message,
+                    originalPrompt: userPrompt
+                },
+                calendarIntegrated: false,
+                suggestions: [
+                    "Try rephrasing your request",
+                    "Include more specific date and time information",
+                    "Check your Google Calendar integration"
+                ]
+            };
         }
     }
 
     /**
-     * Suggest optimal meeting times
+     * Calculate end time based on start time and duration
      */
-    async suggestMeetingTimes(userPrompt, userId, preferences = {}) {
-        try {
-            // Parse the request for time preferences
-            const timePreferences = await this.parseTimePreferences(userPrompt);
-            
-            // Find available slots for the next 7 days
-            const suggestions = [];
-            const today = new Date();
-            
-            for (let i = 0; i < 7; i++) {
-                const checkDate = new Date(today);
-                checkDate.setDate(checkDate.getDate() + i);
-                
-                const slots = await this.findAvailableSlots(
-                    userId, 
-                    checkDate, 
-                    timePreferences.duration || 60,
-                    preferences
-                );
-                
-                if (slots.length > 0) {
-                    suggestions.push({
-                        date: checkDate.toDateString(),
-                        slots: slots.slice(0, 3) // Top 3 slots per day
-                    });
-                }
-            }
+    calculateEndTime(date, startTime, durationMinutes) {
+        // Append 'Z' to ensure the date string is parsed as UTC
+        const startDateTime = new Date(`${date}T${startTime}:00Z`);
+        const endDateTime = new Date(startDateTime.getTime() + (durationMinutes * 60000));
 
-            return {
-                suggestions,
-                preferences: timePreferences,
-                message: `Found ${suggestions.length} days with available time slots`
-            };
-        } catch (error) {
-            console.error("Error suggesting meeting times:", error);
-            return { suggestions: [], message: "Unable to find available times" };
-        }
-    }
-
-    /**
-     * Parse time preferences from natural language
-     */
-    async parseTimePreferences(userPrompt) {
-        const parsePrompt = `
-        Extract time preferences from: "${userPrompt}"
-        
-        Return JSON:
-        {
-            "preferredTimes": ["morning", "afternoon", "evening"],
-            "duration": 60,
-            "daysOfWeek": ["monday", "tuesday", "wednesday", "thursday", "friday"],
-            "timeRange": {
-                "start": "09:00",
-                "end": "17:00"
-            },
-            "urgency": "high|medium|low"
-        }`;
-
-        try {
-            const result = await this.model.generateContent(parsePrompt);
-            const response = result.response.text();
-            return JSON.parse(response.replace(/```json\n?|\n?```/g, ''));
-        } catch (error) {
-            return {
-                preferredTimes: ["morning", "afternoon"],
-                duration: 60,
-                daysOfWeek: ["monday", "tuesday", "wednesday", "thursday", "friday"],
-                timeRange: { start: "09:00", end: "17:00" },
-                urgency: "medium"
-            };
-        }
+        // Use ISO string and slice to get 'YYYY-MM-DDTHH:mm:ss' format
+        return endDateTime.toISOString().slice(0, 19);
     }
 
     /**
      * Get default calendar data for fallback
      */
     getDefaultCalendarData(userPrompt) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(10, 0, 0, 0);
-
+        const now = new Date();
+        
+        // Try to extract basic time information from the prompt
+        let eventTime = "09:00";
+        let eventDate = new Date(now);
+        eventDate.setDate(eventDate.getDate() + 1); // Default to tomorrow
+        
+        // Simple time extraction
+        const timePatterns = [
+            /at (\d{1,2}):?(\d{2})? ?(am|pm)/i,
+            /at (\d{1,2}) ?(am|pm)/i,
+            /(\d{1,2}):?(\d{2}) ?(am|pm)/i,
+            /(\d{1,2}) ?(am|pm)/i
+        ];
+        
+        for (const pattern of timePatterns) {
+            const match = userPrompt.match(pattern);
+            if (match) {
+                let hour = parseInt(match[1]);
+                const minute = match[2] ? parseInt(match[2]) : 0;
+                const period = match[3] || match[2];
+                
+                if (period && period.toLowerCase() === 'pm' && hour !== 12) {
+                    hour += 12;
+                } else if (period && period.toLowerCase() === 'am' && hour === 12) {
+                    hour = 0;
+                }
+                
+                eventTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                break;
+            }
+        }
+        
+        // Simple date extraction
+        const datePatterns = [
+            /today/i,
+            /tomorrow/i,
+            /next week/i,
+            /monday|tuesday|wednesday|thursday|friday|saturday|sunday/i
+        ];
+        
+        for (const pattern of datePatterns) {
+            if (userPrompt.match(pattern)) {
+                const match = userPrompt.match(pattern)[0].toLowerCase();
+                if (match === 'today') {
+                    eventDate = new Date(now);
+                } else if (match === 'tomorrow') {
+                    eventDate = new Date(now);
+                    eventDate.setDate(eventDate.getDate() + 1);
+                } else if (match === 'next week') {
+                    eventDate = new Date(now);
+                    eventDate.setDate(eventDate.getDate() + 7);
+                }
+                break;
+            }
+        }
+        
         return {
-            title: "New Meeting",
-            description: `Meeting created from: ${userPrompt}`,
-            date: tomorrow.toISOString(),
-            time: "10:00",
+            type: "event_creation",
+            title: userPrompt.length > 50 ? "Calendar Event" : userPrompt,
+            description: `Event created from: "${userPrompt}"`,
+            date: eventDate.toISOString().split('T')[0],
+            time: eventTime,
             duration: 60,
-            attendees: [],
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
             location: "",
-            recurring: { isRecurring: false },
-            priority: "medium",
-            type: "meeting",
+            attendees: [],
+            recurring: {
+                isRecurring: false,
+                frequency: "none",
+                endDate: null
+            },
             confidence: 0.5
         };
-    }
-
-    /**
-     * Get default invitation text
-     */
-    getDefaultInvitation(meetingObject) {
-        return `
-Subject: Meeting Invitation: ${meetingObject.title}
-
-You are invited to attend:
-
-Meeting: ${meetingObject.title}
-Date & Time: ${meetingObject.due.string}
-Location: ${meetingObject.metadata.location || "TBD"}
-Duration: ${meetingObject.metadata.duration} minutes
-
-${meetingObject.description ? `Description:\n${meetingObject.description}\n` : ''}
-
-Please confirm your attendance.
-
-Best regards,
-momo Assistant
-        `.trim();
     }
 }

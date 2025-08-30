@@ -143,26 +143,32 @@ const getGoogleCalendarupComingMeetings = async (accessToken, refreshToken) => {
 };
 
 const addGoogleCalendarEvent = async (user, event) => {
-    let accessToken = user.integration.googleCalendar.accessToken;
-    const refreshToken = user.integration.googleCalendar.refreshToken;
-    const isValid = await checkAccessTokenValidity(accessToken);
+    try {
+        let accessToken = user.integration.googleCalendar.accessToken;
+        const refreshToken = user.integration.googleCalendar.refreshToken;
+        const isValid = await checkAccessTokenValidity(accessToken);
 
-    if (!isValid) {
-        accessToken = await refreshGoogleCalendarAccessToken(user);
+        if (!isValid) {
+            accessToken = await refreshGoogleCalendarAccessToken(user);
+        }
+
+        OauthCalClient.setCredentials({
+            access_token: accessToken,
+            refresh_token: refreshToken
+        });
+
+        const calendar = google.calendar({ version: 'v3', auth: OauthCalClient });
+        const newEvent = await calendar.events.insert({
+            calendarId: 'primary',
+            resource: event
+        });
+
+        return { success: true, eventId: newEvent.data.id, data: newEvent.data };
+    } catch (error) {
+        const errorMessage = error.response && error.response.data ? JSON.stringify(error.response.data) : error.message;
+        console.error('Google Calendar API Error:', errorMessage);
+        return { success: false, error: `Google Calendar API Error: ${errorMessage}` };
     }
-
-    OauthCalClient.setCredentials({
-        access_token: accessToken,
-        refresh_token: refreshToken
-    });
-
-    const calendar = google.calendar({ version: 'v3', auth: OauthCalClient });
-    const newEvent = await calendar.events.insert({
-        calendarId: 'primary',
-        resource: event
-    });
-
-    return newEvent.data;
 };
 
 const updateGoogleCalendarEvent = async (user, eventId, event) => {

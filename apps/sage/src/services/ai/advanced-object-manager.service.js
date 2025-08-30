@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Object } from "../../models/lib/object.model.js";
+import { Object as ObjectModel } from "../../models/lib/object.model.js";
 import { saveContent } from "../../utils/helper.service.js";
 
 /**
@@ -91,7 +91,7 @@ export class AdvancedObjectManagerService {
             };
 
             // Execute search with source-aware sorting
-            const results = await Object.find(query)
+            const results = await ObjectModel.find(query)
                 .populate(['labels', 'user'])
                 .sort({ createdAt: -1, source: 1 })
                 .limit(50)
@@ -223,7 +223,7 @@ export class AdvancedObjectManagerService {
                         ];
                     }
 
-                    const sourceResults = await Object.find(sourceQuery)
+                    const sourceResults = await ObjectModel.find(sourceQuery)
                         .populate(['labels', 'user'])
                         .sort({ createdAt: -1 })
                         .limit(20)
@@ -294,14 +294,14 @@ export class AdvancedObjectManagerService {
         for (const source of sources) {
             try {
                 // Check if we have recent items from this source
-                const recentItems = await Object.countDocuments({
+                const recentItems = await ObjectModel.countDocuments({
                     user: userId,
                     source: source,
                     createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
                 });
 
                 // Check total items from this source
-                const totalItems = await Object.countDocuments({
+                const totalItems = await ObjectModel.countDocuments({
                     user: userId,
                     source: source,
                     isDeleted: false
@@ -335,7 +335,7 @@ export class AdvancedObjectManagerService {
      */
     async getLastActivity(userId, source) {
         try {
-            const lastItem = await Object.findOne({
+            const lastItem = await ObjectModel.findOne({
                 user: userId,
                 source: source,
                 isDeleted: false
@@ -724,7 +724,7 @@ export class AdvancedObjectManagerService {
      */
     async executeSmartSearch(searchQuery) {
         try {
-            let query = Object.find(searchQuery.query);
+            let query = ObjectModel.find(searchQuery.query);
 
             if (searchQuery.populate) {
                 searchQuery.populate.forEach(field => {
@@ -1470,7 +1470,7 @@ export class AdvancedObjectManagerService {
             // Apply source-specific validation
             const validatedData = await this.validateObjectData(objectData);
             
-            const object = await Object.create(validatedData);
+            const object = await ObjectModel.create(validatedData);
             await saveContent(object);
             return object;
         } catch (error) {

@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Object } from "../../models/lib/object.model.js";
+import { Object as ObjectModel } from "../../models/lib/object.model.js";
 
 /**
  * User Learning Service
@@ -333,7 +333,20 @@ Examples:
 
     try {
       const result = await this.model.generateContent(contextPrompt);
-      const prediction = JSON.parse(result.response.text());
+      const response = result.response.text();
+      
+      // Clean the response to extract JSON
+      let cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+      
+      // Remove any text before the first { and after the last }
+      const firstBrace = cleanedResponse.indexOf('{');
+      const lastBrace = cleanedResponse.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        cleanedResponse = cleanedResponse.substring(firstBrace, lastBrace + 1);
+      }
+      
+      const prediction = JSON.parse(cleanedResponse);
 
       return {
         operationType: prediction.operationType,
@@ -423,7 +436,7 @@ Consider:
 
 Respond in JSON format:
 {
-    "operationType": "create|update|search|schedule|delete|conversational",
+    "operationType": "create|update|search|schedule|delete|conversational|calendar_event_creation",
     "confidence": 85,
     "reasoning": "Natural explanation focusing on search vs create distinction",
     "suggestedAction": "Specific helpful action to take",
@@ -459,6 +472,12 @@ SEARCH vs CREATE Examples:
 - "make a reminder" → user wants to CREATE
 - "I need to add something" → user wants to CREATE
 
+Calendar Examples:
+- "schedule a meeting tomorrow at 2pm" → user wants CALENDAR_EVENT_CREATION
+- "block time for project work on Friday" → user wants CALENDAR_EVENT_CREATION
+- "create a recurring standup every Monday" → user wants CALENDAR_EVENT_CREATION
+- "book a doctor appointment next week" → user wants CALENDAR_EVENT_CREATION
+
 Other Examples:
 - "add a due date to all my tasks" → user wants to UPDATE existing tasks
 - "hey there" → user is being CONVERSATIONAL
@@ -466,7 +485,7 @@ Other Examples:
 
 Respond in JSON format:
 {
-    "operationType": "create|update|search|schedule|delete|conversational",
+    "operationType": "create|update|search|schedule|delete|conversational|calendar_event_creation",
     "confidence": 80,
     "reasoning": "Natural explanation focusing on search vs create distinction",
     "suggestedAction": "What would be most helpful",
@@ -478,14 +497,26 @@ Respond in JSON format:
 
     try {
       const result = await this.model.generateContent(prompt);
-      const responseText = result.response.text();
-      // Clean up response to extract JSON
-      const cleanedResponse = responseText
-        .replace(/```json\n?|\n?```/g, "")
-        .trim();
+      const response = result.response.text();
+      
+      // Clean the response to extract JSON
+      let cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+      
+      // Remove any text before the first { and after the last }
+      const firstBrace = cleanedResponse.indexOf('{');
+      const lastBrace = cleanedResponse.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        cleanedResponse = cleanedResponse.substring(firstBrace, lastBrace + 1);
+      }
+      
       const prediction = JSON.parse(cleanedResponse);
+
       return {
-        ...prediction,
+        operationType: prediction.operationType,
+        confidence: prediction.confidence,
+        reasoning: prediction.reasoning,
+        suggestedAction: prediction.suggestedAction,
         contextUsed: false,
       };
     } catch (error) {

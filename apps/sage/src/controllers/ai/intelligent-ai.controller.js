@@ -62,10 +62,18 @@ export class IntelligentAIController {
                         operationType: 'search',
                         confidence: 0.9,
                         reasoning: 'Corrected misclassification - clear search pattern detected',
-                        suggestedAction: 'Search for existing items',
-                        parameters: {
-                            search_terms: query.replace(/^(do i have|show me|what|find|any)\s+/i, '').trim()
-                        }
+                        suggestedAction: 'Execute search operation'
+                    };
+                }
+
+                // Add confidence boost for clear schedule patterns to fix misclassification
+                if (this.isLikelyScheduleQuery(query) && intentPrediction.operationType !== 'schedule') {
+                    console.log(`Correcting misclassified schedule query: "${query}" was classified as ${intentPrediction.operationType}`);
+                    intentPrediction = {
+                        operationType: 'schedule',
+                        confidence: 0.9,
+                        reasoning: 'Corrected misclassification - clear schedule pattern detected',
+                        suggestedAction: 'Execute schedule operation'
                     };
                 }
             } catch (error) {
@@ -87,13 +95,20 @@ export class IntelligentAIController {
                         }) + "\n");
                     }
                 } else {
-                    // Improved fallback with search detection
+                    // Improved fallback with search and schedule detection
                     if (this.isLikelySearchQuery(query)) {
                         intentPrediction = {
                             operationType: 'search',
                             confidence: 0.8,
                             reasoning: 'Fallback search detection',
-                            suggestedAction: 'Search for items'
+                            suggestedAction: 'Execute search operation'
+                        };
+                    } else if (this.isLikelyScheduleQuery(query)) {
+                        intentPrediction = {
+                            operationType: 'schedule',
+                            confidence: 0.8,
+                            reasoning: 'Fallback schedule detection',
+                            suggestedAction: 'Execute schedule operation'
                         };
                     } else if (this.isSimpleGreeting(query)) {
                         res.write(JSON.stringify({
@@ -190,6 +205,10 @@ export class IntelligentAIController {
             return await this.handleIntelligentSearch(query, userId, intentPrediction, res);
         }
 
+        if (operationType === 'schedule') {
+            return await this.handleIntelligentSchedule(query, userId, intentPrediction, res);
+        }
+
         // If confidence is low for non-search operations, use chain of thought as backup
         if (confidence < 50) {
             res.write(JSON.stringify({
@@ -214,6 +233,9 @@ export class IntelligentAIController {
 
         case 'schedule':
             return await this.handleIntelligentSchedule(query, userId, intentPrediction, res);
+
+        case 'calendar_event_creation':
+            return await this.handleCalendarEventCreation(query, userId, intentPrediction, res);
 
         case 'delete':
             return await this.handleIntelligentDelete(query, userId, intentPrediction, res);
@@ -508,8 +530,10 @@ export class IntelligentAIController {
                 originalQuery: query
             });
 
+            // Return the user-friendly message from the service
             return {
-                ...result,
+                isConversational: true,
+                response: result, // result is now a string message
                 operationType: 'schedule',
                 success: true
             };
@@ -798,30 +822,52 @@ export class IntelligentAIController {
         const lowerQuery = query.toLowerCase().trim();
         const searchPatterns = [
             /^do i have/i,
-            /^do we have/i,
             /^show me/i,
-            /^what.*do i have/i,
-            /^what.*tasks/i,
-            /^what.*items/i,
-            /^find my/i,
-            /^any.*tasks/i,
-            /^any.*items/i,
-            /^list my/i,
-            /overdue/i,
-            /due today/i,
-            /due tomorrow/i
+            /^find/i,
+            /^search/i,
+            /^get/i,
+            /^list/i,
+            /^what.*do.*have/i,
+            /^where.*is/i,
+            /^when.*did/i,
+            /^how many/i,
+            /^display/i,
+            /^retrieve/i,
+            /^look.*for/i,
+            /^check.*if/i
         ];
 
         return searchPatterns.some(pattern => pattern.test(lowerQuery));
     }
 
     /**
-     * Check if query is a simple greeting (fallback method)
+     * Detect likely schedule/calendar queries to prevent misclassification
      */
-    isSimpleGreeting (query) {
-        const simpleGreetings = ['hi', 'hello', 'hey', 'hiya', 'good morning', 'good afternoon', 'good evening'];
+    isLikelyScheduleQuery (query) {
         const lowerQuery = query.toLowerCase().trim();
-        return simpleGreetings.some(greeting => lowerQuery.startsWith(greeting));
+        const schedulePatterns = [
+            /block.*time/i,
+            /schedule/i,
+            /calendar/i,
+            /meeting/i,
+            /appointment/i,
+            /event/i,
+            /remind.*me/i,
+            /add.*to.*calendar/i,
+            /create.*event/i,
+            /book.*time/i,
+            /set.*reminder/i,
+            /plan.*for/i,
+            /at \d+/i, // "at 8pm", "at 2:30"
+            /tomorrow/i,
+            /today/i,
+            /next week/i,
+            /monday|tuesday|wednesday|thursday|friday|saturday|sunday/i,
+            /\d+:\d+/i, // time patterns like "8:00", "14:30"
+            /\d+\s*(am|pm)/i // "8 pm", "2am"
+        ];
+
+        return schedulePatterns.some(pattern => pattern.test(lowerQuery));
     }
 
     /**
@@ -876,6 +922,56 @@ export class IntelligentAIController {
                 message: error.message,
                 success: false
             });
+        }
+    }
+
+    /**
+     * Handle calendar event creation requests
+     */
+    async handleCalendarEventCreation(query, userId, intentPrediction, res) {
+        try {
+            res.write(JSON.stringify({
+                status: "processing",
+                message: "Creating calendar event..."
+            }) + "\n");
+
+            const result = await this.calendarService.createIntelligentEvent(query, userId, { 
+                intentPrediction, 
+                originalQuery: query 
+            });
+
+            res.write(JSON.stringify({
+                status: "complete",
+                type: result.type,
+                message: result.message,
+                response: result.response,
+                success: result.success,
+                calendarIntegrated: result.calendarIntegrated,
+                suggestions: result.suggestions
+            }) + "\n");
+
+            return result;
+        } catch (error) {
+            console.error("Error in calendar event creation:", error);
+            const errorResponse = {
+                success: false,
+                type: "calendar_error",
+                error: error.message,
+                message: "I had trouble creating the calendar event. Could you please try rephrasing your request?",
+                response: "I encountered an issue while creating your calendar event. Please try again with more specific details like date and time.",
+                suggestions: [
+                    "Try: 'Schedule a meeting tomorrow at 2pm'",
+                    "Try: 'Block time for project work on Friday from 9am to 11am'",
+                    "Try: 'Create a recurring standup every Monday at 9am'"
+                ]
+            };
+
+            res.write(JSON.stringify({
+                status: "error",
+                ...errorResponse
+            }) + "\n");
+
+            return errorResponse;
         }
     }
 }
